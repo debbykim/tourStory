@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="schedule">
+	<select id="list" resultType="dto.MyscheduleDTO">
+		select * from myschedule order by schedule_num asc
+	</select>
+
+	<insert id="ins" parameterType="dto.MyscheduleDTO">
+		insert into
+		myschedule(member_schedule_nick,schedule_name,schedule_title,schedule_address,schedule_tel,schedule_latitude,schedule_longitude,schedule_num,schedule_day)
+		values(#{member_schedule_nick},#{schedule_name},#{schedule_title},#{schedule_address},#{schedule_tel,jdbcType=VARCHAR},#{schedule_latitude},#{schedule_longitude},#{schedule_num},#{schedule_day})
+	</insert>
+	
+	<select id="day" resultType="dto.MyscheduleDTO" parameterType="dto.MyscheduleDTO">
+		SELECT DISTINCT schedule_day from myschedule where schedule_name = #{schedule_name} and member_schedule_nick = #{member_schedule_nick} order by schedule_day asc
+	</select>
+	
+	<delete id="selectdel" parameterType="dto.MyscheduleDTO">
+		delete from myschedule where schedule_day = #{schedule_day} and schedule_name = #{schedule_name} and schedule_num = #{schedule_num}
+	</delete>
+	
+	<select id="scheduleList" parameterType="dto.MyscheduleDTO" resultType="dto.MyscheduleDTO">
+		select * from myschedule where member_schedule_nick = #{member_schedule_nick} and schedule_day = #{schedule_day} and schedule_name = #{schedule_name} order by schedule_num asc
+	</select>
+	
+	<select id="maxNum" parameterType="dto.MyscheduleDTO" resultType="int">
+		select max(schedule_num) from myschedule where schedule_day = #{schedule_day} and schedule_name = #{schedule_name} and member_schedule_nick = #{member_schedule_nick}
+	</select>
+	
+	<select id="fullschedule" resultType="dto.MyscheduleDTO" parameterType="dto.MyscheduleDTO">
+		select * from myschedule where member_schedule_nick = #{member_schedule_nick} and schedule_name = #{schedule_name} order by schedule_day, schedule_num asc 
+	</select>
+	
+	<delete id="delschedule" parameterType="dto.MyscheduleDTO">
+		delete from myschedule where schedule_num=#{schedule_num} and schedule_day=#{schedule_day} and schedule_name = #{schedule_name} and member_schedule_nick = #{member_schedule_nick}
+	</delete>
+	
+	<update id="updschedule" parameterType="dto.ScheduleNumDTO">
+		update myschedule set schedule_num=#{fnum} where schedule_day=#{day} and schedule_name = #{name} and schedule_num=#{bnum}
+	</update>
+	
+	<select id="checkname" parameterType="String" resultType="int">
+		select count(*) from myschedule where schedule_name like #{title}
+	</select>
+</mapper>
+	
