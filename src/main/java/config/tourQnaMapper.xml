@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notice">
+	<select id="count" resultType="int" parameterType="dto.TourStoryQnaDTO">
+     select count(*) from tourstory_qna where qna_category=#{qna_category}
+   </select>
+  
+  <select id="list" parameterType="TourBoardDto.PageDTO"
+           resultType="dto.TourStoryQnaDTO">
+     <![CDATA[ select b.* from (select rownum as rowm,a.* from 
+	(select * from tourstory_qna where qna_category=#{category} order by qna_ref_num desc, qna_re_step)a)b
+	where b.rowm>=#{startRow} and b.rowm<=#{endRow}
+    ]]>
+   </select>
+   
+	<update id="readCount" parameterType="int">
+		update tourstory_qna
+		set qna_readcount = qna_readcount+1 where qna_num=#{qna_num}
+	</update>
+	<select id="content" parameterType="int" resultType="dto.TourStoryQnaDTO">
+		select * from tourstory_qna where qna_num=#{qna_num}
+	</select>
+	<insert id="save" parameterType="dto.TourStoryQnaDTO">
+		insert into tourstory_qna(qna_num,member_qna_nick,qna_subject,qna_content,qna_date,qna_readcount,qna_ref_num,qna_re_level,qna_re_step,qna_category)
+	<if test="qna_ref_num==0">
+		values(tourstory_qna_seq.nextval,#{member_qna_nick},#{qna_subject}, #{qna_content}, sysdate, 0,
+		tourstory_qna_seq.nextval, #{qna_re_level},#{qna_re_step},#{qna_category}) 
+	</if>
+	<if test="qna_ref_num!=0">
+		values(tourstory_qna_seq.nextval,#{member_qna_nick}, #{qna_subject}, #{qna_content}, sysdate, 0,
+		#{qna_ref_num}, #{qna_re_level},#{qna_re_step},#{qna_category}) 
+	</if>
+	</insert>
+	<update id="reStepCount" parameterType="dto.TourStoryQnaDTO">
+		<![CDATA[
+			update tourstory_qna set qna_re_step=qna_re_step+1
+			where qna_ref_num=#{qna_ref_num} and qna_re_step>#{qna_re_step}
+		]]>		
+	</update>
+	<update id="update" parameterType="dto.TourStoryQnaDTO">
+		update tourstory_qna set qna_date=sysdate,qna_subject=#{qna_subject},qna_content=#{qna_content},qna_category=#{qna_category}
+		where qna_num=#{qna_num}												
+	</update>
+	<delete id="delete" parameterType="int">
+		delete from tourstory_qna where qna_num=#{qna_num}
+	</delete>
+</mapper>
