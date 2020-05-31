@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+	<!-- 1 어노테이션 선언 -->
+	<mvc:annotation-driven />
+
+	<!-- 2 DataSource빈 선언 -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="oracle.jdbc.OracleDriver" />
+		<property name="url" value="jdbc:oracle:thin://@127.0.0.1:1521:xe" />
+		<property name="username" value="hr" />
+		<property name="password" value="a1234" />
+	</bean>
+
+	<!-- 3 sqlSessionFactory빈 선언 : mapper.xml을 읽어와서 객체 생성 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath*:config/*Mapper.xml" />
+		
+	</bean>
+
+	<!-- 4 sqlSessionTemplate -->
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- 5 transactionManager빈 선언 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 트랜잭션 사용정의 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*Process" rollback-for="java.lang.Exception" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 트랜잭션 연결 -->
+	<!-- <aop:config>
+		<aop:advisor advice-ref="txAdvice"
+			pointcut="execution(* service.Board*.*(..))" />
+	</aop:config> -->
+	
+	<!-- 6 DAO 빈 선언 -->
+	<bean id="homeDAO" class="dao.HomeDaoImp">
+	<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+		
+	<bean id="mapDao" class="dao.MyscheduleDaoImp">
+ 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+ 	</bean>
+ 	<bean id="memDAO" class="dao.MemberDaoImp">
+ 		<property name="sqlSession" ref="sqlSessionTemplate"/>
+ 	</bean>
+
+ 	<bean id="TourBdao" class="TourBoardDao.TourBoardDaoImp">
+		<property name="sql" ref="sqlSessionTemplate" />
+	</bean>
+
+	<bean id="TourService" class="TourService.TourBoardServiceImp">
+		<property name="tourdao" ref="TourBdao" />
+	</bean>
+	
+ 	<bean id="qnadao" class="dao.TourStoryQnaDaoImp">
+		<property name="sqlSession" ref="sqlSessionTemplate"/>
+	</bean>
+	
+	<bean id="tourQnaservice" class="TourService.TourStoryQnaServiceImp">
+		<property name="bdao" ref="qnadao" />
+	</bean>
+	
+	<bean id="HomeService" class="TourService.HomeServiceImp">
+	<property name="dao" ref="homeDAO"/>	
+	</bean>
+	
+ 	<!-- 7 controller 빈 선언 -->
+ 	<bean id="homeCon" class="kr.co.tourstory.HomeController">
+ 	<property name="service" ref="HomeService"/>
+ 	</bean>
+ 	<bean id="tourQnaView" class="controller.TourQnaViewController"/>
+ 	<bean id="tourUserinfo" class="controller.TourUserinfoController"/>
+ 	<bean id="tourTest" class="controller.TourTestController"/>
+ 	
+ 	<bean id="tourKor" class="controller.TourKorController"/>
+ 	<bean id="tourNotice" class="controller.TourNoticeController"/>
+ 	<bean id="tourMapController" class="controller.TourMapController"/>
+ 	<bean id="tourMapList" class="controller.TourMapListController">
+ 		<property name="dao" ref="mapDao"/>
+ 		<property name="boardservice" ref="TourService"/>
+ 	</bean>
+ 	<bean id="TourBoardCon" class="TourController.TourBoardController">
+		<property name="tourservice" ref="TourService" />
+	</bean>
+	<bean id="tourLogin" class="controller.TourLoginController">
+		<property name="dao" ref="memDAO"/>
+	</bean>
+ 	<bean id="tourQna" class="controller.ToursotryQnaController">
+ 		<property name="service" ref="tourQnaservice"/>
+ 	</bean>
+ 	
+	<!-- 파일 업로드 시작 :: 첨부파일의 임시기억장치 경로 설정 -->
+	<!-- 클라이언트 -> 서버로 보낼 때 임시 기억장치 지정 <constructor-arg value="c:/temp/" /> write화면이 
+		바뀌면 자동적으로 사라진다. -->
+	<bean id="uploadDirResource" class="org.springframework.core.io.FileSystemResource">
+		<constructor-arg value="./src/main/webapp/files/" />
+	</bean>
+
+	<!-- c:/temp/임시 기억장치에 첨부파일을 저장한다. -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- <property name="uploadTempDir" ref="uploadDirResource" /> -->
+	</bean>
+
+	<!-- 파일 업로드 끝 -->
+
+	<!-- 8 view 정보 선언 -->
+	<bean id="view"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/jsp/" />
+		<property name="suffix" value=".jsp" />
+		<property name="order" value="2" />
+	</bean> 
+
+	<bean id="beanNameResolver"
+		class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="0" />
+	</bean>
+	<!-- jsonView -->
+	<bean id="jsonView"
+		class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />
+
+	<!-- xmlView -->
+	<bean id="marshaller" class="org.springframework.oxm.castor.CastorMarshaller">
+	</bean>
+
+	<bean id="xmlView"
+		class="org.springframework.web.servlet.view.xml.MarshallingView">
+		<property name="marshaller" ref="marshaller" />
+		<property name="modelKey" value="aList" />
+	</bean>
+
+	<!-- 파일 다운로드창을 띄우기 위한 ViewResolver빈 선언 -->
+	<bean id="downView"
+		class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="1" />
+	</bean>
+</beans>
